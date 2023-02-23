@@ -1,0 +1,3 @@
+* MARQUEEO: Mario in the Emacs header line
+
+[[./marqueeo.gif]]
