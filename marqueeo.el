@@ -21,6 +21,8 @@
 ;;; Commentary:
 
 ;;; Code:
+(require 'cl-lib)
+
 (defgroup marqueeo nil "Mario in the header-line." :group 'applications :prefix "marqueeo-")
 (defcustom marqueeo-tick-interval (/ 1 30.0) "Rate at which to update header-line." :type 'float)
 (defvar-local marqueeo--previous-header-line nil)
@@ -29,19 +31,21 @@
       (mapcar (lambda (f) (create-image f 'png nil :scale 0.25 :ascent 100 :heuristic-mask t))
               (directory-files "./frames" t ".*.png"))))
 (defvar-local marqueeo-timer nil)
-(defvar-local marqueeo-animation-function
-    (let* ((i -1))
-      (lambda ()
-        (when (> (setq i (1+  i)) (window-width)) (setq i 0))
-        (concat
-         (when (> i 1) (propertize " " 'display `(space :align-to ,i)))
-         (propertize " " 'display (nth (mod i (length marqueeo-frames))
-                                       marqueeo-frames))))))
+(defvar-local marqueeo--frame-counter -1)
+(defun marqueeo-animation-function ()
+  "Animate."
+  (when (> (cl-incf marqueeo--frame-counter) (window-width))
+    (setq marqueeo--frame-counter 0))
+  (concat
+   (when (> marqueeo--frame-counter 1)
+     (propertize " " 'display `(space :align-to ,marqueeo--frame-counter)))
+   (propertize " " 'display (nth (mod marqueeo--frame-counter (length marqueeo-frames))
+                                 marqueeo-frames))))
 
 (defun marqueeo-update-header-line (buffer)
   "Update the header-line in BUFFER."
   (with-current-buffer buffer
-    (setq header-line-format (funcall marqueeo-animation-function))))
+    (setq header-line-format (marqueeo-animation-function))))
 
 (define-minor-mode marqueeo-mode
   "Minor mode to display an animation in the current buffer's `header-line'."
